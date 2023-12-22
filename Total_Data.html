@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Outdoor Air Quality Data Visualization</title>
+    <!-- Add Plotly.js library -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Add styling -->
+    <style>
+      body {
+        font-family: "Roboto", sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f3f3f3;
+      }
+      .plot-container {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        background-color: rgb(255, 255, 255); /* Sky blue background */
+        margin: 20px;
+      }
+      h1 {
+        color: #f6f7f8;
+        text-align: center;
+      }
+
+      /* Responsive styles */
+      @media only screen and (max-width: 600px) {
+        .plot-container {
+          margin: 10px;
+        }
+      }
+
+      @media only screen and (min-width: 601px) and (max-width: 900px) {
+        .plot-container {
+          margin: 15px;
+        }
+      }
+
+      .last-timestamp {
+        text-align: center;
+        margin-top: 10px;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Plotly Plot Containers -->
+    <div id="plot1" class="plot-container"></div>
+    <div id="lastTimestamp1" class="last-timestamp"></div>
+
+    <div id="plot2" class="plot-container"></div>
+    <div id="lastTimestamp2" class="last-timestamp"></div>
+
+    <div id="plot3" class="plot-container"></div>
+    <div id="lastTimestamp3" class="last-timestamp"></div>
+
+    <div id="plot4" class="plot-container"></div>
+    <div id="lastTimestamp4" class="last-timestamp"></div>
+
+    <div id="plot5" class="plot-container"></div>
+    <div id="lastTimestamp5" class="last-timestamp"></div>
+
+    <div id="plot6" class="plot-container"></div>
+    <div id="lastTimestamp6" class="last-timestamp"></div>
+
+    <div id="plot7" class="plot-container"></div>
+    <div id="lastTimestamp7" class="last-timestamp"></div>
+
+    <div id="plot8" class="plot-container"></div>
+    <div id="lastTimestamp8" class="last-timestamp"></div>
+
+    <!-- Script for fetching and plotting data -->
+    <script>
+      // Function to fetch and plot data for a given channel
+      function fetchDataAndPlot(
+        channelId,
+        apiKey,
+        plotId,
+        lastTimestampId,
+        location
+      ) {
+        const url = `https://api.thingspeak.com/channels/${channelId}/feeds.json?api_key=${apiKey}&results=10000000`;
+
+        fetch(url)
+          .then((response) => response.json())
+          .then((data) => {
+            const feeds = data.feeds;
+
+            // Filter data since November 5th
+            const startDate = new Date("2023-11-05T00:00:00Z");
+            const filteredFeeds = feeds.filter(
+              (feed) => new Date(feed.created_at) >= startDate
+            );
+
+            // Extract values for each field
+            const timestamps = filteredFeeds.map((feed) => {
+              const date = new Date(feed.created_at);
+              return `${pad2(date.getDate())}-${pad2(
+                date.getMonth() + 1
+              )}-${date.getFullYear()} ${pad2(date.getHours())}:${pad2(
+                date.getMinutes()
+              )}`;
+            });
+            const pm25 = filteredFeeds.map((feed) => parseFloat(feed.field2));
+            const pm10 = filteredFeeds.map((feed) => parseFloat(feed.field1));
+            const temperature = filteredFeeds.map((feed) =>
+              parseFloat(feed.field3)
+            );
+            const humidity = filteredFeeds.map((feed) =>
+              parseFloat(feed.field4)
+            );
+
+            // Function to pad single-digit numbers with leading zeros
+            function pad2(number) {
+              return (number < 10 ? "0" : "") + number;
+            }
+
+            // Create Plotly trace for each parameter
+            const trace_pm25 = {
+              x: timestamps,
+              y: pm25,
+              name: "PM2.5(µg/m3)",
+              type: "line",
+            };
+            const trace_pm10 = {
+              x: timestamps,
+              y: pm10,
+              name: "PM10(µg/m3)",
+              type: "line",
+            };
+            const trace_temperature = {
+              x: timestamps,
+              y: temperature,
+              name: "Temperature(°C)",
+              type: "line",
+            };
+            const trace_humidity = {
+              x: timestamps,
+              y: humidity,
+              name: "Humidity(%)",
+              type: "line",
+            };
+
+            // Create layout for the plot
+            const layout = {
+              title: `Outdoor Air Quality Data - ${location}`,
+              xaxis: { title: "Timestamp", type: "category" },
+              yaxis: { title: "Values", range: [0, 250], tick0: 0, dtick: 25 },
+              showlegend: true,
+              height: 750,
+              width: 1250,
+              xaxis: { rangeslider: { visible: true } },
+            };
+
+            // Combine traces and layout, and plot the chart
+            Plotly.newPlot(
+              plotId,
+              [trace_pm25, trace_pm10, trace_temperature, trace_humidity],
+              layout
+            );
+
+            // Print the last timestamp
+            const lastTimestamp = timestamps[timestamps.length - 1];
+            document.getElementById(
+              lastTimestampId
+            ).innerHTML = `Last Data_Entry_at: ${lastTimestamp}`;
+          })
+          .catch((error) =>
+            console.error(`Error fetching data for Channel ${location}:`, error)
+          );
+      }
+
+      // Call the function for each channel
+      fetchDataAndPlot(
+        2289468,
+        "ABD8F2SRXV2INLPI",
+        "plot2",
+        "lastTimestamp2",
+        "phD Quarters E-Block- 2nd floor"
+      );
+      fetchDataAndPlot(
+        2289455,
+        "2XXBNXKHAH29M81X",
+        "plot1",
+        "lastTimestamp1",
+        "phD Quarters E-Block- 5th floor"
+      );
+      fetchDataAndPlot(
+        2289472,
+        "SALA4ED3PTW29VIL",
+        "plot3",
+        "lastTimestamp3",
+        "T - Hub / D-Block - 2nd floor"
+      );
+      fetchDataAndPlot(
+        2289480,
+        "SUQ8Q0XA5GDFSZPR",
+        "plot4",
+        "lastTimestamp4",
+        "T - Hub / D-Block - 5th floor"
+      );
+      fetchDataAndPlot(
+        2289484,
+        "6OVMJRPP2FSX69XB",
+        "plot5",
+        "lastTimestamp5",
+        "NBH - 2nd floor"
+      );
+      fetchDataAndPlot(
+        2289488,
+        "B6USFTFD4HFNUX81",
+        "plot6",
+        "lastTimestamp6",
+        "NBH - 5th floor (Terrace)"
+      );
+      fetchDataAndPlot(
+        2289493,
+        "O7JHMODQHO8QCHWQ",
+        "plot7",
+        "lastTimestamp7",
+        "OBH E-Block- 2nd floor"
+      );
+      fetchDataAndPlot(
+        2289497,
+        "AUIZTNUKGQTA660K",
+        "plot8",
+        "lastTimestamp8",
+        "OBH E-Block- 4th floor"
+      );
+    </script>
+  </body>
+</html>

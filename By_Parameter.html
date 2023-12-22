@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Outdoor Air Quality Data Visualization</title>
+    <!-- Add Plotly.js library -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Add styling -->
+    <style>
+      body {
+        font-family: "Roboto", sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f3f3f3;
+      }
+      .plot-container {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        background-color: rgb(255, 255, 255); /* Sky blue background */
+        margin: 20px;
+      }
+      h1 {
+        color: #f6f7f8;
+        text-align: center;
+      }
+
+      /* Responsive styles */
+      @media only screen and (max-width: 600px) {
+        .plot-container {
+          margin: 10px;
+        }
+      }
+
+      @media only screen and (min-width: 601px) and (max-width: 900px) {
+        .plot-container {
+          margin: 15px;
+        }
+      }
+
+      .last-timestamp {
+        text-align: center;
+        margin-top: 10px;
+        font-size: 14px;
+      }
+
+      .legend-container {
+        position: absolute;
+        top: 50px;
+        right: 10px;
+        background-color: rgba(255, 255, 255, 0.7);
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 14px;
+      }
+
+      .legend-item {
+        margin-bottom: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Plotly Plot Container -->
+    <div id="mergedPlot1" class="plot-container"></div>
+    <div id="mergedPlot2" class="plot-container"></div>
+    <div id="mergedPlot3" class="plot-container"></div>
+    <div id="mergedPlot4" class="plot-container"></div>
+
+    <!-- Script for fetching and plotting data -->
+    <script>
+      // Function to fetch and plot data for a given channel
+      function fetchDataAndPlot(channelId, apiKey, location, field) {
+        const url = `https://api.thingspeak.com/channels/${channelId}/feeds.json?api_key=${apiKey}&results=7000000`;
+
+        return fetch(url)
+          .then((response) => response.json())
+          .then((data) => {
+            const feeds = data.feeds;
+
+            // Filter data since November 5th
+            const startDate = new Date("2023-11-05T00:00:00Z");
+            const filteredFeeds = feeds.filter(
+              (feed) => new Date(feed.created_at) >= startDate
+            );
+
+            // Extract values for the specified field
+            const timestamps = filteredFeeds.map((feed) => {
+              const date = new Date(feed.created_at);
+              return `${pad2(date.getUTCDate())}-${pad2(
+                date.getUTCMonth() + 1
+              )}-${date.getUTCFullYear()} ${pad2(date.getUTCHours())}:${pad2(
+                date.getUTCMinutes()
+              )}`;
+            });
+            const values = filteredFeeds.map((feed) => parseFloat(feed[field]));
+
+            // Function to pad single-digit numbers with leading zeros
+            function pad2(number) {
+              return (number < 10 ? "0" : "") + number;
+            }
+
+            // Create Plotly trace for the specified field
+            return {
+              x: timestamps,
+              y: values,
+              name: `${location}`,
+              type: "line",
+            };
+          })
+          .catch((error) =>
+            console.error(`Error fetching data for Channel ${location}:`, error)
+          );
+      }
+
+      // Fetch data for each channel and field
+      const promises2 = [
+        fetchDataAndPlot(
+          2289468,
+          "ABD8F2SRXV2INLPI",
+          "phD Quarters E-Block- 2nd floor",
+          "field2"
+        ),
+        fetchDataAndPlot(
+          2289455,
+          "2XXBNXKHAH29M81X",
+          "phD Quarters E-Block- 5th floor",
+          "field2"
+        ),
+        fetchDataAndPlot(
+          2289472,
+          "SALA4ED3PTW29VIL",
+          "T - Hub / D-Block - 2nd floor",
+          "field2"
+        ),
+        fetchDataAndPlot(
+          2289480,
+          "SUQ8Q0XA5GDFSZPR",
+          "T - Hub / D-Block - 5th floor",
+          "field2"
+        ),
+        fetchDataAndPlot(
+          2289484,
+          "6OVMJRPP2FSX69XB",
+          "NBH - 2nd floor",
+          "field2"
+        ),
+        fetchDataAndPlot(
+          2289488,
+          "B6USFTFD4HFNUX81",
+          "NBH - 5th floor (Terrace)",
+          "field2"
+        ),
+        fetchDataAndPlot(
+          2289493,
+          "O7JHMODQHO8QCHWQ",
+          "OBH E-Block- 2nd floor",
+          "field2"
+        ),
+        fetchDataAndPlot(
+          2289497,
+          "AUIZTNUKGQTA660K",
+          "OBH E-Block- 4th floor",
+          "field2"
+        ),
+      ];
+      Promise.all(promises2)
+        .then((traces) => {
+          // Create layout for the merged plot
+          const layout = {
+            title: "Outdoor Air Quality Data - PM2.5 (µg/m3)",
+            xaxis: { title: "Timestamp", type: "category" },
+            yaxis: { title: "Values", range: [0, 250], tick0: 0, dtick: 25 },
+            showlegend: true,
+            height: 750,
+            width: 1250,
+            xaxis: { rangeslider: { visible: true } },
+          };
+
+          // Plot the merged chart
+          Plotly.newPlot("mergedPlot1", traces, layout);
+        })
+        .catch((error) => console.error("Error fetching data:", error));
+
+      // Wait for all promises to resolve
+
+      // Fetch data for each channel and field
+      const promises1 = [
+        fetchDataAndPlot(
+          2289468,
+          "ABD8F2SRXV2INLPI",
+          "phD Quarters E-Block- 2nd floor",
+          "field1"
+        ),
+        fetchDataAndPlot(
+          2289455,
+          "2XXBNXKHAH29M81X",
+          "phD Quarters E-Block- 5th floor",
+          "field1"
+        ),
+        fetchDataAndPlot(
+          2289472,
+          "SALA4ED3PTW29VIL",
+          "T - Hub / D-Block - 2nd floor",
+          "field1"
+        ),
+        fetchDataAndPlot(
+          2289480,
+          "SUQ8Q0XA5GDFSZPR",
+          "T - Hub / D-Block - 5th floor",
+          "field1"
+        ),
+        fetchDataAndPlot(
+          2289484,
+          "6OVMJRPP2FSX69XB",
+          "NBH - 2nd floor",
+          "field1"
+        ),
+        fetchDataAndPlot(
+          2289488,
+          "B6USFTFD4HFNUX81",
+          "NBH - 5th floor (Terrace)",
+          "field1"
+        ),
+        fetchDataAndPlot(
+          2289493,
+          "O7JHMODQHO8QCHWQ",
+          "OBH E-Block- 2nd floor",
+          "field1"
+        ),
+        fetchDataAndPlot(
+          2289497,
+          "AUIZTNUKGQTA660K",
+          "OBH E-Block- 4th floor",
+          "field1"
+        ),
+      ];
+
+      Promise.all(promises1)
+        .then((traces) => {
+          // Create layout for the merged plot
+          const layout = {
+            title: "Outdoor Air Quality Data - PM10 (µg/m3)",
+            xaxis: { title: "Timestamp", type: "category" },
+            yaxis: { title: "Values", range: [0, 250], tick0: 0, dtick: 25 },
+            showlegend: true,
+            height: 750,
+            width: 1250,
+            xaxis: { rangeslider: { visible: true } },
+          };
+
+          // Plot the merged chart
+          Plotly.newPlot("mergedPlot2", traces, layout);
+        })
+        .catch((error) => console.error("Error fetching data:", error));
+      // Wait for all promises to resolve
+
+      // Fetch data for each channel and field
+      const promises3 = [
+        fetchDataAndPlot(
+          2289468,
+          "ABD8F2SRXV2INLPI",
+          "phD Quarters E-Block- 2nd floor",
+          "field3"
+        ),
+        fetchDataAndPlot(
+          2289455,
+          "2XXBNXKHAH29M81X",
+          "phD Quarters E-Block- 5th floor",
+          "field3"
+        ),
+        fetchDataAndPlot(
+          2289472,
+          "SALA4ED3PTW29VIL",
+          "T - Hub / D-Block - 2nd floor",
+          "field3"
+        ),
+        fetchDataAndPlot(
+          2289480,
+          "SUQ8Q0XA5GDFSZPR",
+          "T - Hub / D-Block - 5th floor",
+          "field3"
+        ),
+        fetchDataAndPlot(
+          2289484,
+          "6OVMJRPP2FSX69XB",
+          "NBH - 2nd floor",
+          "field3"
+        ),
+        fetchDataAndPlot(
+          2289488,
+          "B6USFTFD4HFNUX81",
+          "NBH - 5th floor (Terrace)",
+          "field3"
+        ),
+        fetchDataAndPlot(
+          2289493,
+          "O7JHMODQHO8QCHWQ",
+          "OBH E-Block- 2nd floor",
+          "field3"
+        ),
+        fetchDataAndPlot(
+          2289497,
+          "AUIZTNUKGQTA660K",
+          "OBH E-Block- 4th floor",
+          "field3"
+        ),
+      ];
+      Promise.all(promises3)
+        .then((traces) => {
+          // Create layout for the merged plot
+          const layout = {
+            title: "Outdoor Air Quality Data - Temperature (C)",
+            xaxis: { title: "Timestamp", type: "category" },
+            yaxis: { title: "Values", range: [0, 75], tick0: 0, dtick: 25 },
+            showlegend: true,
+            height: 750,
+            width: 1250,
+            xaxis: { rangeslider: { visible: true } },
+          };
+
+          // Plot the merged chart
+          Plotly.newPlot("mergedPlot3", traces, layout);
+        })
+        .catch((error) => console.error("Error fetching data:", error));
+      // Wait for all promises to resolve
+
+      // Fetch data for each channel and field
+      const promises4 = [
+        fetchDataAndPlot(
+          2289468,
+          "ABD8F2SRXV2INLPI",
+          "phD Quarters E-Block- 2nd floor",
+          "field4"
+        ),
+        fetchDataAndPlot(
+          2289455,
+          "2XXBNXKHAH29M81X",
+          "phD Quarters E-Block- 5th floor",
+          "field4"
+        ),
+        fetchDataAndPlot(
+          2289472,
+          "SALA4ED3PTW29VIL",
+          "T - Hub / D-Block - 2nd floor",
+          "field4"
+        ),
+        fetchDataAndPlot(
+          2289480,
+          "SUQ8Q0XA5GDFSZPR",
+          "T - Hub / D-Block - 5th floor",
+          "field4"
+        ),
+        fetchDataAndPlot(
+          2289484,
+          "6OVMJRPP2FSX69XB",
+          "NBH - 2nd floor",
+          "field4"
+        ),
+        fetchDataAndPlot(
+          2289488,
+          "B6USFTFD4HFNUX81",
+          "NBH - 5th floor (Terrace)",
+          "field4"
+        ),
+        fetchDataAndPlot(
+          2289493,
+          "O7JHMODQHO8QCHWQ",
+          "OBH E-Block- 2nd floor",
+          "field4"
+        ),
+        fetchDataAndPlot(
+          2289497,
+          "AUIZTNUKGQTA660K",
+          "OBH E-Block- 4th floor",
+          "field4"
+        ),
+      ];
+      // Wait for all promises to resolve
+
+      Promise.all(promises4)
+        .then((traces) => {
+          // Create layout for the merged plot
+          const layout = {
+            title: "Outdoor Air Quality Data - Humidity",
+            xaxis: { title: "Timestamp", type: "category" },
+            yaxis: { title: "Values", range: [0, 120], tick0: 0, dtick: 25 },
+            showlegend: true,
+            height: 750,
+            width: 1250,
+            xaxis: { rangeslider: { visible: true } },
+          };
+
+          // Plot the merged chart
+          Plotly.newPlot("mergedPlot4", traces, layout);
+        })
+        .catch((error) => console.error("Error fetching data:", error));
+    </script>
+  </body>
+</html>
