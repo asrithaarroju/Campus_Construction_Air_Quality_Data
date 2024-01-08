@@ -177,7 +177,7 @@
           };
 
           // Plot the merged chart
-          Plotly.newPlot("mergedPlot1", traces, layout);
+          Plotly.newPlot("mergedPlot2", traces, layout);
         })
         .catch((error) => console.error("Error fetching data:", error));
 
@@ -249,7 +249,7 @@
           };
 
           // Plot the merged chart
-          Plotly.newPlot("mergedPlot2", traces, layout);
+          Plotly.newPlot("mergedPlot1", traces, layout);
         })
         .catch((error) => console.error("Error fetching data:", error));
       // Wait for all promises to resolve
@@ -381,13 +381,13 @@
         .then((traces) => {
           // Create layout for the merged plot
           const layout = {
-            title: "Outdoor Air Quality Data - Humidity",
+            title: "Outdoor Air Quality Data - PM10 (µg/m3)",
             xaxis: { title: "Timestamp", type: "category" },
-            yaxis: { title: "Values", range: [0, 120], tick0: 0, dtick: 25 },
+            yaxis: { title: "Values", range: [0, 250], tick0: 0, dtick: 25 },
             showlegend: true,
             height: 750,
             width: 1250,
-            xaxis: { rangeslider: { visible: true } },
+            rangeslider: { visible: true }, // move this property outside xaxis
           };
 
           // Plot the merged chart
