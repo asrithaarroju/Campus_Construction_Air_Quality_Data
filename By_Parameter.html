@@ -32,7 +32,7 @@
         }
       }
 
-      @media only screen and (min-width: 601px) and (max-width: 900px) {
+      @media only screen and (min-width: 601px) {
         .plot-container {
           margin: 15px;
         }
@@ -86,11 +86,7 @@
             // Extract values for the specified field
             const timestamps = filteredFeeds.map((feed) => {
               const date = new Date(feed.created_at);
-              return `${pad2(date.getUTCDate())}-${pad2(
-                date.getUTCMonth() + 1
-              )}-${date.getUTCFullYear()} ${pad2(date.getUTCHours())}:${pad2(
-                date.getUTCMinutes()
-              )}`;
+              return date.toISOString().slice(0, 19).replace("T", " ");
             });
             const values = filteredFeeds.map((feed) => parseFloat(feed[field]));
 
@@ -169,7 +165,7 @@
           const layout = {
             title: "Outdoor Air Quality Data - PM2.5 (µg/m3)",
             xaxis: { title: "Timestamp", type: "category" },
-            yaxis: { title: "Values", range: [0, 250], tick0: 0, dtick: 25 },
+            yaxis: { title: "Values", range: [0, 350], tick0: 0, dtick: 25 },
             showlegend: true,
             height: 750,
             width: 1250,
@@ -240,7 +236,7 @@
           const layout = {
             title: "Outdoor Air Quality Data - PM10 (µg/m3)",
             xaxis: { title: "Timestamp", type: "category" },
-            yaxis: { title: "Values", range: [0, 250], tick0: 0, dtick: 25 },
+            yaxis: { title: "Values", range: [0, 350], tick0: 0, dtick: 25 },
             showlegend: true,
             height: 750,
             width: 1250,
@@ -392,8 +388,6 @@
           Plotly.newPlot("mergedPlot4", traces, layout);
         })
         .catch((error) => console.error("Error fetching data:", error));
-
-      
     </script>
   </body>
 </html>
