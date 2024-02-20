@@ -81,8 +81,8 @@
             });
             const pm25 = feeds.map((feed) => parseFloat(feed.field2));
             const pm10 = feeds.map((feed) => parseFloat(feed.field1));
-            const temperature = feeds.map((feed) => parseFloat(feed.field3));
-            const humidity = feeds.map((feed) => parseFloat(feed.field4));
+            const humidity = feeds.map((feed) => parseFloat(feed.field3));
+            const temperature = feeds.map((feed) => parseFloat(feed.field4));
 
             function pad2(number) {
               return (number < 10 ? "0" : "") + number;
@@ -100,18 +100,19 @@
               name: "PM10(µg/m3)",
               type: "line",
             };
-            const trace_temperature = {
-              x: timestamps,
-              y: temperature,
-              name: "Temperature(°C)",
-              type: "line",
-            };
             const trace_humidity = {
               x: timestamps,
               y: humidity,
               name: "Humidity(%)",
               type: "line",
             };
+            const trace_temperature = {
+              x: timestamps,
+              y: temperature,
+              name: "Temperature(°C)",
+              type: "line",
+            };
+            
 
             const layout = {
               title: title,
@@ -161,7 +162,7 @@
 
             Plotly.newPlot(
               plotId,
-              [trace_pm25, trace_pm10, trace_temperature, trace_humidity],
+              [trace_pm25, trace_pm10, trace_humidity, trace_temperature],
               layout
             );
 
