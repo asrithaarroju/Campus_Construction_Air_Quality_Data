@@ -71,22 +71,16 @@
           .then((data) => {
             const feeds = data.feeds;
 
-            const timestamps = feeds.map((feed) => {
-              const date = new Date(feed.created_at);
-              return `${pad2(date.getDate())}-${pad2(
-                date.getMonth() + 1
-              )}-${date.getFullYear()} ${pad2(date.getHours())}:${pad2(
-                date.getMinutes()
-              )}`;
-            });
-            const pm25 = feeds.map((feed) => parseFloat(feed.field2));
-            const pm10 = feeds.map((feed) => parseFloat(feed.field1));
-            const humidity = feeds.map((feed) => parseFloat(feed.field3));
-            const temperature = feeds.map((feed) => parseFloat(feed.field4));
+            // Group data into 15-minute intervals and calculate average values
+            const groupedData = groupData(feeds, 15);
 
-            function pad2(number) {
-              return (number < 10 ? "0" : "") + number;
-            }
+            const timestamps = groupedData.map((group) => group.timestamp);
+            const pm25 = groupedData.map((group) => group.pm25Avg);
+            const pm10 = groupedData.map((group) => group.pm10Avg);
+            const humidity = groupedData.map((group) => group.humidityAvg);
+            const temperature = groupedData.map(
+              (group) => group.temperatureAvg
+            );
 
             const trace_pm25 = {
               x: timestamps,
@@ -112,13 +106,13 @@
               name: "Temperature(°C)",
               type: "line",
             };
-            
 
             const layout = {
               title: title,
               xaxis: {
                 title: "Timestamp",
                 type: "category",
+                tickformat: "%d-%m-%Y %H:%M",
                 rangeselector: {
                   buttons: [
                     {
@@ -128,7 +122,7 @@
                       stepmode: "backward",
                     },
                     {
-                      count: 7,
+                      count: 6,
                       label: "1w",
                       step: "day",
                       stepmode: "backward",
@@ -163,6 +157,8 @@
             Plotly.newPlot(
               plotId,
               [trace_pm25, trace_pm10, trace_humidity, trace_temperature],
+              // [trace_pm25, trace_pm10],
+
               layout
             );
 
@@ -175,6 +171,70 @@
           .catch((error) => console.error("Error fetching data:", error));
       }
 
+      // Function to group data into specified time intervals and calculate average values
+      function groupData(data, intervalInMinutes) {
+        const groupedData = [];
+        let currentIntervalStart = new Date(data[0].created_at);
+        let pm25Sum = 0;
+        let pm10Sum = 0;
+        let humiditySum = 0;
+        let temperatureSum = 0;
+        let count = 0;
+
+        data.forEach((feed) => {
+          const timestamp = new Date(feed.created_at);
+          if (
+            timestamp - currentIntervalStart <
+            intervalInMinutes * 60 * 1000
+          ) {
+            // Still within the current interval
+            pm25Sum += parseFloat(feed.field2);
+            pm10Sum += parseFloat(feed.field1);
+            humiditySum += parseFloat(feed.field3);
+            temperatureSum += parseFloat(feed.field4);
+            count++;
+          } else {
+            // Move to the next interval
+            groupedData.push({
+              timestamp: formatTimestamp(currentIntervalStart),
+              pm25Avg: pm25Sum / count,
+              pm10Avg: pm10Sum / count,
+              humidityAvg: humiditySum / count,
+              temperatureAvg: temperatureSum / count,
+            });
+            // Reset sums and count for the new interval
+            pm25Sum = parseFloat(feed.field2);
+            pm10Sum = parseFloat(feed.field1);
+            humiditySum = parseFloat(feed.field3);
+            temperatureSum = parseFloat(feed.field4);
+            count = 1;
+            currentIntervalStart = timestamp;
+          }
+        });
+
+        // Add the last interval
+        groupedData.push({
+          timestamp: formatTimestamp(currentIntervalStart),
+          pm25Avg: pm25Sum / count,
+          pm10Avg: pm10Sum / count,
+          humidityAvg: humiditySum / count,
+          temperatureAvg: temperatureSum / count,
+        });
+
+        return groupedData;
+      }
+
+      // Function to format timestamp as DD-MM-YYYY HH:MM
+      function formatTimestamp(timestamp) {
+        const year = timestamp.getFullYear();
+        const month = ("0" + (timestamp.getMonth() + 1)).slice(-2);
+        const day = ("0" + timestamp.getDate()).slice(-2);
+        const hours = ("0" + timestamp.getHours()).slice(-2);
+        const minutes = ("0" + timestamp.getMinutes()).slice(-2);
+        return `${day}-${month}-${year} ${hours}:${minutes}`;
+      }
+
+      // Fetch and plot data for each plot
       fetchDataAndPlot(
         "ABD8F2SRXV2INLPI",
         "2289468",
