@@ -1,1 +1,1 @@
-https://asrithaarroju.github.io/AQ_Construction_Site/
+https://asrithaarroju.github.io/Campus_Construction_Air_Quality_Data/By_Parameter.html
